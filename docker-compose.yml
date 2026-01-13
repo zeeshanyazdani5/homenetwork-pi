@@ -1,0 +1,35 @@
+version: "2.1"
+
+volumes:
+  pihole_config: {}
+  tailscale: {}
+
+services:
+  pihole:
+    build: pihole
+    cap_add:
+      # See https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+      # Required if you are using Pi-hole as your DHCP server, else not needed
+      - NET_ADMIN
+      # Required if you are using Pi-hole as your NTP client to be able to set the host's system time
+      - SYS_TIME
+      # Optional, if Pi-hole should get some more processing time
+      - SYS_NICE
+    volumes:
+      - "pihole_config:/etc/pihole"
+    dns:
+      - "127.0.0.1"
+      - "1.1.1.1"
+    network_mode: host
+    tmpfs:
+      - /tmp
+      - /run
+      - /var/log/pihole
+
+  unbound:
+    build: unbound
+    cap_add:
+     - NET_ADMIN
+    ports:
+      - "5053:5053/tcp"
+      - "5053:5053/udp"
