@@ -5,6 +5,24 @@ volumes:
   tailscale: {}
 
 services:
+  tailscale:
+    image: tailscale/tailscale:stable
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    volumes:
+      - "tailscale:/var/lib/tailscale"
+    environment:
+      TS_ACCEPT_DNS: "false"
+      TS_HOSTNAME: "homenetwork-pi"
+      TS_STATE_DIR: "/var/lib/tailscale"
+      TS_USERSPACE: "false"
+    network_mode: host
+    tmpfs:
+      - /tmp
+
   pihole:
     build: pihole
     cap_add:
