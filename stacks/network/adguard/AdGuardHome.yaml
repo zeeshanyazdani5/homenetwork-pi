@@ -1,0 +1,61 @@
+# Seed config for AdGuard Home.
+# On first boot, open http://<vm-ip>:3000 to create the admin user.
+# After setup, AGH may rewrite this file in the data volume — treat the
+# bind-mounted copy as the *initial* template; back up conf/ from DATA_DIR.
+
+http:
+  address: 0.0.0.0:80
+
+dns:
+  bind_hosts:
+    - 0.0.0.0
+  port: 53
+  # Recursive resolver (Unbound) on the compose network
+  upstream_dns:
+    - unbound:5053
+  bootstrap_dns:
+    - 9.9.9.9
+    - 1.1.1.1
+  # Unbound already caches + validates DNSSEC
+  cache_size: 0
+  enable_dnssec: false
+  ratelimit: 20
+  # Prefer IPv4 for typical home LANs
+  aaaa_disabled: false
+
+querylog:
+  enabled: true
+  interval: 24h
+
+statistics:
+  enabled: true
+  interval: 24h
+
+filters:
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
+    name: AdGuard DNS filter
+    id: 1
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt
+    name: AdGuard Default Blocklist
+    id: 2
+
+user_rules: []
+
+dhcp:
+  enabled: false
+
+clients:
+  runtime_sources:
+    whois: true
+    arp: true
+    rdns: true
+    dhcp: true
+    hosts: true
+
+# Local DNS rewrites (hostname → LAN IP). Add as needed, e.g.:
+# rewrites:
+#   - domain: plex.lan
+#     answer: 192.168.1.50
+rewrites: []

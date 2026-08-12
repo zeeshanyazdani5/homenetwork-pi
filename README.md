@@ -1,39 +1,40 @@
-# homenetwork-pi
-Docker image for my RPI running various network tools. Managed by BalenaOS.
+# homenetwork
 
-## Tailscale
+Homelab network stack. Historically a **BalenaOS + Pi-hole** image for a Raspberry Pi.
+Target platform is an **HP Z2 Mini G4** running **Proxmox VE**, with this stack in a
+small Debian Docker VM.
 
-This repo runs Tailscale as a separate Balena service. The container stores its
-node state in the `tailscale` volume, uses the host network, and exposes the
-Pi to your private Tailscale network without opening router ports.
+## Active stack (Proxmox)
 
-You need a Tailscale account. Create one at https://tailscale.com, then create
-an auth key in the Tailscale admin console and add it to the Balena fleet or
-device environment variables:
+**AdGuard Home + Unbound + Tailscale** — see [`stacks/network/`](stacks/network/).
+
+| Service | Job |
+| --- | --- |
+| AdGuard Home | Network DNS filtering, UI, local rewrites |
+| Unbound | Recursive resolver (privacy) |
+| Tailscale | Mesh VPN + optional LAN subnet router |
+
+Migration runbook: [`docs/MIGRATION.md`](docs/MIGRATION.md)  
+Phone checklist: [`docs/CHECKLIST.md`](docs/CHECKLIST.md)
+
+## Legacy (Raspberry Pi / Balena)
+
+Root [`docker-compose.yml`](docker-compose.yml), [`balena.yml`](balena.yml), and
+[`pihole/`](pihole/) remain until the Pi is cut over. Do not deploy them on the Z2.
+
+### Tailscale (legacy Balena notes)
+
+On Balena, set:
 
 ```sh
 TS_AUTHKEY=tskey-auth-...
+TS_ROUTES=192.168.1.0/24
 ```
 
-For normal remote access to the Pi, install Tailscale on your phone/laptop and
-sign in to the same account. After the Balena device comes online, connect to
-`homenetwork-pi` using its Tailscale IP or MagicDNS name.
+Approve the advertised subnet route in the Tailscale admin console. For the new
+stack, the same variables live in `stacks/network/.env` (see `.env.example`).
 
-To reach other devices on your home LAN while away, use the Pi as a Tailscale
-subnet router:
+## Future guests (same Proxmox host)
 
-1. Find your home subnet, usually something like `192.168.1.0/24` or
-   `10.0.0.0/24`.
-2. Add this Balena environment variable:
-
-   ```sh
-   TS_ROUTES=192.168.1.0/24
-   ```
-
-3. In the Tailscale admin console, approve the advertised subnet route for
-   `homenetwork-pi`.
-4. Make sure the remote phone/laptop has Tailscale connected. It should then
-   be able to reach LAN devices by their normal home IP addresses.
-
-If you want Pi-hole DNS while away from home, set the Pi's Tailscale IP as a
-nameserver in the Tailscale admin console DNS settings.
+- [`stacks/media/`](stacks/media/) — Plex + Intel Quick Sync
+- [`stacks/apps/`](stacks/apps/) — trading bot and other apps

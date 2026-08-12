@@ -1,0 +1,70 @@
+# Network stack for Proxmox (Debian Docker VM)
+#
+# AdGuard Home  — DNS filtering, caching UI, local rewrites
+# Unbound       — recursive resolver (privacy; no third-party forwarder)
+# Tailscale     — remote access + optional subnet router
+#
+# See ../../docs/MIGRATION.md
+
+services:
+  unbound:
+    image: klutchell/unbound:1.24.2@sha256:cb9a0f06c803c764395e2ff50bd8a244470601290c78fb2cdcf1bd200a027cd6
+    restart: unless-stopped
+    volumes:
+      - ./unbound/unbound.conf:/etc/unbound/unbound.conf:ro
+      - ./unbound/custom.conf.d:/etc/unbound/custom.conf.d:ro
+    networks:
+      - dns
+    expose:
+      - "5053/tcp"
+      - "5053/udp"
+    cap_add:
+      - NET_ADMIN
+
+  adguardhome:
+    image: adguard/adguardhome:v0.107.78@sha256:2c127294fa5f96151d9d3a433fb9d66c17e4d18cf698c2b04372a80e26fdd26f
+    restart: unless-stopped
+    depends_on:
+      - unbound
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+      - "443:443/tcp"
+      - "3000:3000/tcp" # first-run setup wizard only; disable in UI after
+      - "853:853/tcp"   # optional DNS-over-TLS
+    volumes:
+      - "${DATA_DIR:-/srv/network/data}/adguard/work:/opt/adguardhome/work"
+      # Writable conf (AGH updates this). Seed once from ./adguard/AdGuardHome.yaml
+      - "${DATA_DIR:-/srv/network/data}/adguard/conf:/opt/adguardhome/conf"
+    networks:
+      - dns
+    # Caps help if you later enable AGH's DHCP (not required for DNS-only)
+    cap_add:
+      - NET_ADMIN
+
+  # Host networking so Tailscale can advertise LAN routes from this VM.
+  tailscale:
+    image: tailscale/tailscale:stable
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - "${DATA_DIR:-/srv/network/data}/tailscale:/var/lib/tailscale"
+    environment:
+      TS_AUTHKEY: "${TS_AUTHKEY}"
+      TS_HOSTNAME: "${TS_HOSTNAME:-homenetwork}"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "false"
+      TS_ACCEPT_DNS: "${TS_ACCEPT_DNS:-false}"
+      TS_ROUTES: "${TS_ROUTES:-}"
+    tmpfs:
+      - /tmp
+
+networks:
+  dns:
+    driver: bridge
