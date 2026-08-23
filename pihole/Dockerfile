@@ -24,8 +24,8 @@ ENTRYPOINT [ "/balena-init.sh" ]
 # https://docs.pi-hole.net/docker/configuration/?h=pihole+ftl#configuration
 # https://docs.pi-hole.net/docker/upgrading/v5-v6/?h=web_bind_addr#removed-variables
 ENV FTLCONF_dns_listeningMode='all'
-ENV FTLCONF_dns_upstreams='127.0.0.1#5053'
-ENV FTLCONF_webserver_api_password='balena'
+#ENV FTLCONF_dns_upstreams='127.0.0.1#5053' # defined in balena. this is an example
+#ENV FTLCONF_webserver_api_password='balena' # defined in balena. this is an example
 # Match Unbound edns-buffer-size to avoid dnsmasq packet size warnings
 ENV EDNS_PACKET_MAX='1232'
 # https://github.com/pi-hole/FTL/blob/ac500d5f1ff192d087209d6e9b955515c8f35434/test/pihole.toml#L627-L660
