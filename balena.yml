@@ -26,7 +26,8 @@ data:
     - BALENA_HOST_CONFIG_gpu_mem: 64
   applicationEnvironmentVariables:
     - FTLCONF_webserver_api_password: 'balena'
-    - FTLCONF_dns_upstreams: '1.1.1.1;1.0.0.1'
+    - FTLCONF_dns_upstreams: '127.0.0.1#5053'
+    - EDNS_PACKET_MAX: '1232'
   defaultDeviceType: "raspberrypi3"
   supportedDeviceTypes:
     - "raspberry-pi2"
